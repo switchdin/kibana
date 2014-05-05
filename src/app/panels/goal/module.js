@@ -64,6 +64,10 @@ define([
        */
       labels  : true,
       /** @scratch /panels/goal/3
+       * labels:: Set to false to show absolute values instead of percentage complete.
+       */
+      percent  : true,
+      /** @scratch /panels/goal/3
        * spyable:: Set to false to disable the inspect function.
        */
       spyable : true,
@@ -98,7 +102,11 @@ define([
       /** @scratch /panels/goal/5
        * valuefield:: Goal_stats facet value field
        */
-      valuefield  : ''
+      valuefield  : '',
+      /** @scratch /panels/goal/5
+       * valuefield:: Label for the 'complete' field
+       */
+      completeLabel  : 'Complete'
     };
 
     _.defaults($scope.panel,_d);
@@ -176,7 +184,7 @@ define([
         }
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [
-          { label : 'Complete', data : complete, color: querySrv.colors[parseInt($scope.$id, 16)%8] },
+          { label : $scope.panel.completeLabel, data : complete, color: querySrv.colors[parseInt($scope.$id, 16)%8] },
           { data : remaining, color: Chromath.lighten(querySrv.colors[parseInt($scope.$id, 16)%8],0.70).toString() }
         ];
         $scope.$emit('render');
@@ -215,8 +223,9 @@ define([
             formatter: function(label, series){
               var font = parseInt(scope.row.height.replace('px',''),10)/8 + String('px');
               if(!(_.isUndefined(label))) {
+                var value = scope.panel.percent ? Math.round(series.percent) + '%' : Math.round(series.data[0][1]);
                 return '<div style="font-size:'+font+';font-weight:bold;text-align:center;padding:2px;color:#fff;">'+
-                Math.round(series.percent)+'%</div>';
+                  value+'</div>';
               } else {
                 return '';
               }
@@ -265,11 +274,12 @@ define([
         var $tooltip = $('<div>');
         elem.bind('plothover', function (event, pos, item) {
           if (item) {
+            var value = scope.panel.percent ? parseFloat(item.series.percent).toFixed(1) + '%' : Math.round(item.series.data[0][1]);
             $tooltip
               .html([
                 kbn.query_color_dot(item.series.color, 15),
                 (item.series.label || ''),
-                parseFloat(item.series.percent).toFixed(1) + '%'
+                value
               ].join(' '))
               .place_tt(pos.pageX, pos.pageY, {
                 offset: 10
