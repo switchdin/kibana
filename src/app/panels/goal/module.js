@@ -64,6 +64,10 @@ define([
        */
       labels  : true,
       /** @scratch /panels/goal/3
+       * labels:: Set to false to show absolute values instead of percentage complete.
+       */
+      percent  : true,
+      /** @scratch /panels/goal/3
        * spyable:: Set to false to disable the inspect function.
        */
       spyable : true,
@@ -87,7 +91,24 @@ define([
         mode        : 'all',
         ids         : []
       },
+      /** @scratch /panels/goal/5
+       * gmode:: Facet mode: goal or goal_stats
+       */
+      gmode       : 'goal',
+      /** @scratch /panels/goal/5
+       * gstat:: Goal_stats facet stats field
+       */
+      gstat       : 'total',
+      /** @scratch /panels/goal/5
+       * valuefield:: Goal_stats facet value field
+       */
+      valuefield  : '',
+      /** @scratch /panels/goal/5
+       * valuefield:: Label for the 'complete' field
+       */
+      completeLabel  : 'Complete'
     };
+
     _.defaults($scope.panel,_d);
 
     $scope.init = function() {
@@ -129,10 +150,24 @@ define([
 
       var results;
 
-      request = request
-        .query(boolQuery)
-        .filter(filterSrv.getBoolFilter(filterSrv.ids()))
-        .size(0);
+      if($scope.panel.gmode === 'goal') {
+        request = request
+          .query(boolQuery)
+          .filter(filterSrv.getBoolFilter(filterSrv.ids()))
+          .size(0);
+      }
+
+      if($scope.panel.gmode === 'goal_stats') {
+        request = request
+          .facet($scope.ejs.StatisticalFacet('stats')
+            .field($scope.panel.valuefield)
+            .facetFilter($scope.ejs.QueryFilter(
+              $scope.ejs.FilteredQuery(
+                boolQuery,
+                filterSrv.getBoolFilter(filterSrv.ids())
+                )))).size(0);
+      }
+
 
       $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
@@ -140,10 +175,16 @@ define([
 
       results.then(function(results) {
         $scope.panelMeta.loading = false;
-        var complete  = results.hits.total;
+        var complete;
+        if($scope.panel.gmode === 'goal') {
+          complete = results.hits.total;
+        }
+        if($scope.panel.gmode === 'goal_stats') {
+          complete = results.facets.stats[$scope.panel.gstat];
+        }
         var remaining = $scope.panel.query.goal - complete;
         $scope.data = [
-          { label : 'Complete', data : complete, color: querySrv.colors[parseInt($scope.$id, 16)%8] },
+          { label : $scope.panel.completeLabel, data : complete, color: querySrv.colors[parseInt($scope.$id, 16)%8] },
           { data : remaining, color: Chromath.lighten(querySrv.colors[parseInt($scope.$id, 16)%8],0.70).toString() }
         ];
         $scope.$emit('render');
@@ -182,8 +223,9 @@ define([
             formatter: function(label, series){
               var font = parseInt(scope.row.height.replace('px',''),10)/8 + String('px');
               if(!(_.isUndefined(label))) {
+                var value = scope.panel.percent ? Math.round(series.percent) + '%' : Math.round(series.data[0][1]);
                 return '<div style="font-size:'+font+';font-weight:bold;text-align:center;padding:2px;color:#fff;">'+
-                Math.round(series.percent)+'%</div>';
+                  value+'</div>';
               } else {
                 return '';
               }
@@ -232,11 +274,12 @@ define([
         var $tooltip = $('<div>');
         elem.bind('plothover', function (event, pos, item) {
           if (item) {
+            var value = scope.panel.percent ? parseFloat(item.series.percent).toFixed(1) + '%' : Math.round(item.series.data[0][1]);
             $tooltip
               .html([
                 kbn.query_color_dot(item.series.color, 15),
                 (item.series.label || ''),
-                parseFloat(item.series.percent).toFixed(1) + '%'
+                value
               ].join(' '))
               .place_tt(pos.pageX, pos.pageY, {
                 offset: 10

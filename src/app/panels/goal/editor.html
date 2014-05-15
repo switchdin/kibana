@@ -8,8 +8,27 @@
           <input type="number" style="width:90%" ng-model="panel.query.goal" ng-change="set_refresh(true)">
         </form>
       </div>
+      <div class="editor-option">
+        <label class="small">Goal mode</label>
+        <select class="input-medium" ng-model="panel.gmode" ng-options="f for f in ['goal','goal_stats']" ng-change="set_refresh(true)"></select>
+      </div>
+      <div class="editor-option" ng-show="panel.gmode == 'goal_stats'">
+        <label class="small">Stats type</label>
+        <select class="input-medium" ng-model="panel.gstat" ng-options="f for f in ['count', 'total_count', 'min', 'max', 'total', 'mean']" ng-change="set_refresh(true)"></select>
+      </div>
+      <div class="editor-option" ng-show="panel.gmode == 'goal_stats'">
+        <label class="small">Value field</label>
+        <input type="text" class="input-small" bs-typeahead="fields.list" ng-model="panel.valuefield" ng-change="set_refresh(true)">
+      </div>
+      <div class="editor-option">
+        <form style="margin-bottom: 0px">
+          <label class="small">Complete Label</label>
+          <input type="text" style="input-medium" ng-model="panel.completeLabel" ng-change="set_refresh(true)">
+        </form>
+      </div>
     </div>
-
+  </div>
+  <div class="editor-row">
     <div class="section">
       <h5>View Options</h5>
       <div class="editor-option">
@@ -22,9 +41,11 @@
         <label class="small"> Labels </label><input type="checkbox" ng-model="panel.labels" ng-checked="panel.labels">
       </div>
       <div class="editor-option">
+        <label class="small"> Percent </label><input type="checkbox" ng-model="panel.percent" ng-checked="panel.percent">
+      </div>
+      <div class="editor-option">
         <label class="small">Legend</label>
         <select class="input-small" ng-model="panel.legend" ng-options="f for f in ['above','below','none']"></select></span>
       </div>
     </div>
-
   </div>
