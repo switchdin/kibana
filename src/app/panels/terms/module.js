@@ -237,7 +237,7 @@ function (angular, app, _, $, kbn) {
 
     $scope.build_search = function(term,negate) {
       if(term.label in $scope.filter_ids &&
-         $scope.filter_ids[term.label] in filterSrv.list){
+         $scope.filter_ids[term.label] in filterSrv.list()){
         filterSrv.remove($scope.filter_ids[term.label]);
         delete $scope.filter_ids[term.label];
       } else if(_.isUndefined(term.meta)) {
